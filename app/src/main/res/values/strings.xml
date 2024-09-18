@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">News App</string>
+    <string name="in_app_name">News App</string>
+    <string name="all_category_name">All</string>
+    <string name="tech_category_name">Technology</string>
+    <string name="science_category_name">Science</string>
+    <string name="sports_category_name">Sports</string>
+    <string name="general_category_name">General</string>
+    <string name="business_category_name">Business</string>
+    <string name="entertainment_category_name">Entertainment</string>
+    <string name="health_category_name">Health</string>
+</resources>
