@@ -1,6 +1,7 @@
 package com.example.newsapp.activities;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -81,6 +82,14 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                     refreshPage();
                 }
                 binding.swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
+        //Opening the saved articles activity on icon click
+        binding.savedArticlesScreenIconImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SavedArticlesActivity.class));
             }
         });
     }

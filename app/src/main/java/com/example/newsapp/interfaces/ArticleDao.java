@@ -11,7 +11,7 @@ import java.util.List;
 
 @Dao
 public interface ArticleDao {
-    @Query("select * from articles_table")
+    @Query("SELECT * FROM articles_table")
     List<ArticleEntity> getArticles();
 
     @Insert
@@ -19,4 +19,7 @@ public interface ArticleDao {
 
     @Delete
     void deleteArticle(ArticleEntity entity);
+
+    @Query("SELECT * FROM articles_table WHERE url = :url LIMIT 1")
+    ArticleEntity getArticleByUrl(String url);
 }
