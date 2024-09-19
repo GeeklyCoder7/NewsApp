@@ -13,6 +13,7 @@ constraintlayout = "2.1.4"
 legacySupportV4 = "1.0.0"
 newsApiJava = "1.0.2"
 retrofit = "2.9.0"
+roomCompiler = "2.6.1"
 
 [libraries]
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
@@ -28,6 +29,8 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
 news-api-java = { module = "com.github.KwabenBerko:News-API-Java", version.ref = "newsApiJava" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompiler" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

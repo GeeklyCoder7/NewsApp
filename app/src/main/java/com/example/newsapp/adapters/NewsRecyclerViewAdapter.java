@@ -2,6 +2,7 @@ package com.example.newsapp.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,9 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.newsapp.R;
 import com.example.newsapp.activities.DetailNewsActivity;
+import com.example.newsapp.databases.DatabaseHelper;
 import com.example.newsapp.databinding.NewsSampleCardBinding;
+import com.example.newsapp.entities.ArticleEntity;
 import com.example.newsapp.models.ArticleModel;
-import com.example.newsapp.models.NewsModel;
 
 import java.util.ArrayList;
 
@@ -22,6 +24,7 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
 
     Context context;
     ArrayList<ArticleModel> articleModelArrayList;
+
 
     //A key for accessing the ArticleModel object in the DetailNewsActivity
     public static final String ARTICLE_KEY = "my_article_key";
@@ -54,6 +57,16 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
                 Intent intent = new Intent(context, DetailNewsActivity.class);
                 intent.putExtra(ARTICLE_KEY, articleModel);
                 context.startActivity(intent);
+            }
+        });
+
+        //Performing save article functionality on button click
+        holder.binding.saveNewsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatabaseHelper databaseHelper = DatabaseHelper.getDatabase(context);
+
+                databaseHelper.articleDao().addArticle(new ArticleEntity(articleModel.getAuthor(), articleModel.getTitle(), articleModel.getDescription(), articleModel.getUrlToImage(), articleModel.getPublishedAt(), articleModel.getContent(), articleModel.getUrl()));
             }
         });
     }

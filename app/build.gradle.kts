@@ -49,4 +49,6 @@ dependencies {
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation (libs.glide)
+    implementation (libs.room.runtime)
+    annotationProcessor (libs.room.compiler)
 }

@@ -6,4 +6,5 @@
     <color name="primary_color">#D73B2F</color>
     <color name="secondary_color">#743ADA</color>
     <color name="news_text_color">#333333</color>
+    <color name="button_bg_color">#4A90E2</color>
 </resources>
