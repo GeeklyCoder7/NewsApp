@@ -62,7 +62,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start"
                     android:layout_weight="0"
-                    android:backgroundTint="@color/button_bg_color"
+                    android:backgroundTint="@color/already_saved_button_bg_color"
                     android:text="Remove Article"
                     android:textColor="@color/white"
                     android:textSize="18sp" />
