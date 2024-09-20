@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         binding.savedArticlesScreenIconImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                startActivity(new Intent(MainActivity.this, SavedArticlesActivity.class));
+                startActivity(new Intent(MainActivity.this, SavedArticlesActivity.class));
             }
         });
     }

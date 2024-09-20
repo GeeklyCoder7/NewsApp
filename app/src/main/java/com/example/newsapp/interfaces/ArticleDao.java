@@ -6,6 +6,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 
 import com.example.newsapp.entities.ArticleEntity;
+import com.example.newsapp.models.ArticleModel;
 
 import java.util.List;
 
@@ -21,5 +22,5 @@ public interface ArticleDao {
     void deleteArticle(ArticleEntity entity);
 
     @Query("SELECT * FROM articles_table WHERE url = :url LIMIT 1")
-    ArticleEntity getArticleByUrl(String url);
+    ArticleEntity searchForExistence(String url);
 }

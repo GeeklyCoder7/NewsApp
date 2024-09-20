@@ -6,8 +6,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -24,6 +27,8 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
 
     Context context;
     ArrayList<ArticleModel> articleModelArrayList;
+    ArticleEntity existingArticle;
+    DatabaseHelper databaseHelper;
 
 
     //A key for accessing the ArticleModel object in the DetailNewsActivity
@@ -32,6 +37,7 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
     public NewsRecyclerViewAdapter(Context context, ArrayList<ArticleModel> articleModelArrayList) {
         this.context = context;
         this.articleModelArrayList = articleModelArrayList;
+        databaseHelper = DatabaseHelper.getDatabase(context);
     }
 
     @NonNull
@@ -43,6 +49,12 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
     @Override
     public void onBindViewHolder(@NonNull NewsRecyclerViewAdapterViewHolder holder, int position) {
         ArticleModel articleModel = articleModelArrayList.get(position);
+        //Checking if the current article already exists (Checking for future processes)
+        existingArticle = databaseHelper.articleDao().searchForExistence(articleModel.getUrl());
+        if (existingArticle != null) {
+            changeButtonDesign(holder.binding.saveNewsButton);
+        }
+
         holder.binding.newsHeadlineTextView.setText(articleModel.getTitle());
         if (articleModel.getUrlToImage() == null) {
             holder.binding.newsImageView.setImageResource(R.drawable.news_image_not_available_png);
@@ -64,9 +76,22 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
         holder.binding.saveNewsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DatabaseHelper databaseHelper = DatabaseHelper.getDatabase(context);
-
-                databaseHelper.articleDao().addArticle(new ArticleEntity(articleModel.getAuthor(), articleModel.getTitle(), articleModel.getDescription(), articleModel.getUrlToImage(), articleModel.getPublishedAt(), articleModel.getContent(), articleModel.getUrl()));
+                existingArticle = databaseHelper.articleDao().searchForExistence(articleModel.getUrl());
+                if (existingArticle != null) {
+                    Toast.makeText(context, "Article already saved.", Toast.LENGTH_SHORT).show();
+                } else {
+                    databaseHelper.articleDao().addArticle(new ArticleEntity(
+                            articleModel.getAuthor(),
+                            articleModel.getTitle(),
+                            articleModel.getDescription(),
+                            articleModel.getUrlToImage(),
+                            articleModel.getPublishedAt(),
+                            articleModel.getContent(),
+                            articleModel.getUrl()
+                    ));
+                    //Changing the button state after saving to the database
+                    changeButtonDesign(holder.binding.saveNewsButton);
+                }
             }
         });
     }
@@ -74,6 +99,13 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
     @Override
     public int getItemCount() {
         return articleModelArrayList.size();
+    }
+
+    //Method for changing button design
+    private void changeButtonDesign(Button button) {
+        button.setText("Saved");
+        button.setBackgroundColor(ContextCompat.getColor(context, R.color.already_saved_button_bg_color));
+        button.setTextColor(ContextCompat.getColor(context, R.color.white));
     }
 
     public static class NewsRecyclerViewAdapterViewHolder extends RecyclerView.ViewHolder {
