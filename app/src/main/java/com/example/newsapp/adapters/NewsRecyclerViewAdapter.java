@@ -20,6 +20,7 @@ import com.example.newsapp.databases.DatabaseHelper;
 import com.example.newsapp.databinding.NewsSampleCardBinding;
 import com.example.newsapp.entities.ArticleEntity;
 import com.example.newsapp.models.ArticleModel;
+import com.example.newsapp.utils.UtilityMethods;
 
 import java.util.ArrayList;
 
@@ -91,6 +92,17 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
                     ));
                     //Changing the button state after saving to the database
                     changeButtonDesign(holder.binding.saveNewsButton);
+                }
+            }
+        });
+
+        holder.binding.shareNewsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (UtilityMethods.isConnectedToInternet(context)) { //If connected to internet then we will allow to share the article URL
+                    UtilityMethods.shareArticleLink(context, articleModel.getUrl());
+                } else { //If not connected we wont share the article URL
+                    Toast.makeText(context, "No internet connection!", Toast.LENGTH_SHORT).show();
                 }
             }
         });
