@@ -23,4 +23,7 @@ public interface ArticleDao {
 
     @Query("SELECT * FROM articles_table WHERE url = :url LIMIT 1")
     ArticleEntity searchForExistence(String url);
+
+    @Query("DELETE FROM articles_table")
+    void deleteAllArticles();
 }

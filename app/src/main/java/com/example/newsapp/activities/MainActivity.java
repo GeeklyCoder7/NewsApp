@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, SavedArticlesActivity.class));
+                finish();
             }
         });
     }

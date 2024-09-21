@@ -16,10 +16,13 @@ import com.example.newsapp.adapters.SavedArticlesRecyclerViewAdapter;
 import com.example.newsapp.databases.DatabaseHelper;
 import com.example.newsapp.databinding.ActivitySavedArticlesBinding;
 import com.example.newsapp.entities.ArticleEntity;
+import com.example.newsapp.interfaces.OnArticleRemovedListener;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class SavedArticlesActivity extends AppCompatActivity {
+public class SavedArticlesActivity extends AppCompatActivity implements OnArticleRemovedListener {
     ActivitySavedArticlesBinding binding;
     ArrayList<ArticleEntity> articleEntityArrayList;
     SavedArticlesRecyclerViewAdapter savedArticlesRecyclerViewAdapter;
@@ -47,6 +50,27 @@ public class SavedArticlesActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(SavedArticlesActivity.this, MainActivity.class));
+                finish();
+            }
+        });
+
+        binding.deleteAllArticlesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //calling deleteAllArticles() method inside ExecutorThread so that UI thread doesn't get affected
+                ExecutorService executorService = Executors.newSingleThreadExecutor();
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        databaseHelper.articleDao().deleteAllArticles();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                onArticleRemoved();
+                            }
+                        });
+                    }
+                });
             }
         });
     }
@@ -59,10 +83,21 @@ public class SavedArticlesActivity extends AppCompatActivity {
 
     //Method for setting up the saved articles recyclerview
     private void setUpSavedArticlesRecyclerView() {
-        savedArticlesRecyclerViewAdapter = new SavedArticlesRecyclerViewAdapter(SavedArticlesActivity.this, articleEntityArrayList);
-        binding.savedArticlesRecyclerView.setLayoutManager(new LinearLayoutManager(SavedArticlesActivity.this));
-        binding.savedArticlesRecyclerView.setAdapter(savedArticlesRecyclerViewAdapter);
-        savedArticlesRecyclerViewAdapter.notifyDataSetChanged();
+        if (articleEntityArrayList.isEmpty()) {
+            binding.nothingToShowLinearLayout.setVisibility(View.VISIBLE);
+            binding.nestedScrollView.setVisibility(View.GONE);
+        } else {
+            binding.nestedScrollView.setVisibility(View.VISIBLE);
+            binding.nothingToShowLinearLayout.setVisibility(View.GONE);
+            savedArticlesRecyclerViewAdapter = new SavedArticlesRecyclerViewAdapter(SavedArticlesActivity.this, articleEntityArrayList, this::onArticleRemoved);
+            binding.savedArticlesRecyclerView.setLayoutManager(new LinearLayoutManager(SavedArticlesActivity.this));
+            binding.savedArticlesRecyclerView.setAdapter(savedArticlesRecyclerViewAdapter);
+        }
+    }
 
+    @Override
+    public void onArticleRemoved() {
+        binding.nothingToShowLinearLayout.setVisibility(View.VISIBLE);
+        binding.nestedScrollView.setVisibility(View.GONE);
     }
 }
