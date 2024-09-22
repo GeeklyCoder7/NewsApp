@@ -1,13 +1,16 @@
 package com.example.newsapp.activities;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -19,10 +22,12 @@ import com.example.newsapp.R;
 import com.example.newsapp.adapters.CategoryRecyclerViewAdapter;
 import com.example.newsapp.adapters.NewsRecyclerViewAdapter;
 import com.example.newsapp.databinding.ActivityMainBinding;
+import com.example.newsapp.databinding.CloseAppCustomDialogLayoutBinding;
 import com.example.newsapp.interfaces.RetrofitAPI;
 import com.example.newsapp.models.ArticleModel;
 import com.example.newsapp.models.CategoryRecyclerViewModel;
 import com.example.newsapp.models.NewsModel;
+import com.example.newsapp.utils.CustomDialogFragment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +40,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements CategoryRecyclerViewAdapter.CategoryClickInterface{
+public class MainActivity extends AppCompatActivity implements CategoryRecyclerViewAdapter.CategoryClickInterface {
     ActivityMainBinding binding;
     ArrayList<CategoryRecyclerViewModel> categoryRecyclerViewModelArrayList;
     CategoryRecyclerViewModel categoryRecyclerViewModel;
@@ -93,6 +98,12 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                 finish();
             }
         });
+    }
+
+    //Overriding onBackPressed() method to show custom dialog asking permission to close the app
+    @Override
+    public void onBackPressed() {
+        showCustomDialog();
     }
 
     //Method for setting up the category names
@@ -182,6 +193,12 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         Collections.shuffle(articleModelArrayList);
         setUpNews();
         newsRecyclerViewAdapter.notifyDataSetChanged();
+    }
+
+    //Method for displaying custom dialog to exit the app
+    private void showCustomDialog() {
+        CustomDialogFragment customDialogFragment = new CustomDialogFragment();
+        customDialogFragment.show(getSupportFragmentManager(), "customDialog");
     }
 
     @Override

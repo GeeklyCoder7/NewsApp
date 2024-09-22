@@ -33,7 +33,7 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
 
 
     //A key for accessing the ArticleModel object in the DetailNewsActivity
-    public static final String ARTICLE_KEY = "my_article_key";
+    public static final String ARTICLE_MODEL_KEY = "my_article_model_key";
 
     public NewsRecyclerViewAdapter(Context context, ArrayList<ArticleModel> articleModelArrayList) {
         this.context = context;
@@ -68,7 +68,7 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, DetailNewsActivity.class);
-                intent.putExtra(ARTICLE_KEY, articleModel);
+                intent.putExtra(ARTICLE_MODEL_KEY, articleModel);
                 context.startActivity(intent);
             }
         });

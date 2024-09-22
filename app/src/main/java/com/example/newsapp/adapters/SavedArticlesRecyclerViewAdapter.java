@@ -2,6 +2,7 @@ package com.example.newsapp.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.newsapp.R;
+import com.example.newsapp.activities.DetailNewsActivity;
 import com.example.newsapp.activities.SavedArticlesActivity;
 import com.example.newsapp.databases.DatabaseHelper;
 import com.example.newsapp.databinding.ActivitySavedArticlesBinding;
@@ -25,6 +27,7 @@ public class SavedArticlesRecyclerViewAdapter extends RecyclerView.Adapter<Saved
     ArrayList<ArticleEntity> articleEntityArrayList;
     DatabaseHelper databaseHelper;
     OnArticleRemovedListener listener;
+    public static final String ARTICLE_ENTITY_KEY = "my_article_entity_key";
 
     public SavedArticlesRecyclerViewAdapter(Context context, ArrayList<ArticleEntity> articleEntityArrayList, OnArticleRemovedListener listener) {
         this.context = context;
@@ -43,7 +46,11 @@ public class SavedArticlesRecyclerViewAdapter extends RecyclerView.Adapter<Saved
     public void onBindViewHolder(@NonNull SavedArticlesRecyclerViewAdapterViewHolder holder, @SuppressLint("RecyclerView") int position) {
         ArticleEntity articleEntity = articleEntityArrayList.get(position);
         holder.binding.newsHeadlineTextView.setText(articleEntity.getTitle());
-        Glide.with(context).load(articleEntity.getUrlToImage()).into(holder.binding.newsImageView);
+        if (articleEntity.getUrlToImage() == null) {
+            Glide.with(context).load(R.drawable.placeholder).into(holder.binding.newsImageView);
+        } else {
+            Glide.with(context).load(articleEntity.getUrlToImage()).into(holder.binding.newsImageView);
+        }
         holder.binding.newsDescriptionTextView.setText(articleEntity.getDescription());
         holder.binding.removeArticleButton.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("NotifyDataSetChanged")
@@ -57,6 +64,15 @@ public class SavedArticlesRecyclerViewAdapter extends RecyclerView.Adapter<Saved
                     }
                 }
                 notifyDataSetChanged();
+            }
+        });
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, DetailNewsActivity.class);
+                intent.putExtra(ARTICLE_ENTITY_KEY, articleEntity);
+                context.startActivity(intent);
             }
         });
     }

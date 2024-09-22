@@ -1,12 +1,16 @@
 package com.example.newsapp.entities;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "articles_table")
-public class ArticleEntity {
+public class ArticleEntity implements Parcelable {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
@@ -52,6 +56,29 @@ public class ArticleEntity {
         this.content = content;
         this.url = url;
     }
+
+    protected ArticleEntity(Parcel in) {
+        id = in.readInt();
+        author = in.readString();
+        title = in.readString();
+        description = in.readString();
+        urlToImage = in.readString();
+        publishedAt = in.readString();
+        content = in.readString();
+        url = in.readString();
+    }
+
+    public static final Creator<ArticleEntity> CREATOR = new Creator<ArticleEntity>() {
+        @Override
+        public ArticleEntity createFromParcel(Parcel in) {
+            return new ArticleEntity(in);
+        }
+
+        @Override
+        public ArticleEntity[] newArray(int size) {
+            return new ArticleEntity[size];
+        }
+    };
 
     public int getId() {
         return id;
@@ -115,5 +142,22 @@ public class ArticleEntity {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(author);
+        dest.writeString(title);
+        dest.writeString(description);
+        dest.writeString(urlToImage);
+        dest.writeString(publishedAt);
+        dest.writeString(content);
+        dest.writeString(url);
     }
 }

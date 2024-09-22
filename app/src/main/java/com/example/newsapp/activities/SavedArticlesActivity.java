@@ -75,6 +75,16 @@ public class SavedArticlesActivity extends AppCompatActivity implements OnArticl
         });
     }
 
+    //Overriding onBackPressed() method to send user back to MainActivity
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        startActivity(new Intent(SavedArticlesActivity.this, MainActivity.class));
+        finish();
+    }
+
     //Method for fetching the articles from room database
     private void fetchSavedArticles() {
         articleEntityArrayList = (ArrayList<ArticleEntity>) databaseHelper.articleDao().getArticles();
