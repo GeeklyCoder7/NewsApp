@@ -63,7 +63,11 @@ public class DetailNewsActivity extends AppCompatActivity {
     //Method for setting up all the views
     @SuppressLint("SetTextI18n")
     private void setDetails() {
-        Glide.with(DetailNewsActivity.this).load(urlToImage).into(binding.newsDetailImageView);
+        if (urlToImage != null) {
+            Glide.with(DetailNewsActivity.this).load(urlToImage).into(binding.newsDetailImageView);
+        } else {
+            binding.newsDetailImageView.setImageResource(R.drawable.placeholder);
+        }
         binding.newsDetailHeadlineTextView.setText(title);
         binding.newsDetailAuthorTextView.setText("Author - " + author);
         binding.newsDetailPublishedAtTextView.setText("Published on - " + publishedAt);

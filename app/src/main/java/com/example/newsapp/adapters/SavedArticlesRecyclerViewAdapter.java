@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +20,7 @@ import com.example.newsapp.databinding.ActivitySavedArticlesBinding;
 import com.example.newsapp.databinding.SavedArticlesSampleBinding;
 import com.example.newsapp.entities.ArticleEntity;
 import com.example.newsapp.interfaces.OnArticleRemovedListener;
+import com.example.newsapp.utils.UtilityMethods;
 
 import java.util.ArrayList;
 
@@ -64,6 +66,17 @@ public class SavedArticlesRecyclerViewAdapter extends RecyclerView.Adapter<Saved
                     }
                 }
                 notifyDataSetChanged();
+            }
+        });
+        
+        holder.binding.shareNewsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (UtilityMethods.isConnectedToInternet(context)) {
+                    UtilityMethods.shareArticleLink(context, articleEntity.getUrl());
+                } else {
+                    Toast.makeText(context, "No internet connection!", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

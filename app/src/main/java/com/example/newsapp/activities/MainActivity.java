@@ -7,11 +7,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
     NewsRecyclerViewAdapter newsRecyclerViewAdapter;
     ArrayList<ArticleModel> articleModelArrayList;
     String pageNo = "1";
+    EditText searchEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +65,8 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
             return insets;
         });
 
+        searchEditText = binding.newsSearchView.findViewById(androidx.appcompat.R.id.search_src_text);
+
         //Initializing variables and objects here
         categoryRecyclerViewModelArrayList = new ArrayList<>();
         articleModelArrayList = new ArrayList<>();
@@ -75,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         binding.newsRecyclerView.setAdapter(newsRecyclerViewAdapter);
 
         //Calling important methods here
+        designEditText(searchEditText);
         fetchCategories();
         fetchNews("All");
         newsRecyclerViewAdapter.notifyDataSetChanged();
@@ -96,6 +102,20 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, SavedArticlesActivity.class));
                 finish();
+            }
+        });
+
+        //Performing search operations
+        binding.newsSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                fetchNews(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
             }
         });
     }
@@ -130,8 +150,8 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
 
         //Different API URLs for fetching data in different forms
-        String categoryApiUrl = "https://newsapi.org/v2/everything?q=" + q + "&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
-        String allNewsApiUrl = "https://newsapi.org/v2/everything?q=all&language=en&excludeDomains=stackoverflow.com&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
+        String apiUrl = "https://newsapi.org/v2/everything?q=" + q + "&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
+//        String allNewsApiUrl = "https://newsapi.org/v2/everything?q=all&language=en&excludeDomains=stackoverflow.com&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
         String BASE_URL = "https://newsapi.org/";
 
         //Calling the Retrofit api
@@ -142,29 +162,25 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
 
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
         Call<NewsModel> call;
-        if (q.equals("All")) {
-            call = retrofitAPI.getAllNews(allNewsApiUrl);
-        } else {
-            call = retrofitAPI.getNewsByCategory(categoryApiUrl);
-        }
+        call = retrofitAPI.getNewsByCategory(apiUrl);
 
         //enqueuing the call method and handling the onResponse and onFailure methods
         call.enqueue(new Callback<NewsModel>() {
             @Override
             public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
-                NewsModel newsModel = response.body();
-                assert newsModel != null;
-                ArrayList<ArticleModel> article = newsModel.getArticles();
-                for (int i = 0; i < article.size(); i++) {
-                    //Adding a condition to check whether the news thumbnail is null. If it is null, then we won't load that news
-                    if (article.get(i).getUrlToImage() != null && !Objects.equals(article.get(i).getUrlToImage(), "")) {
-                        articleModelArrayList.add(new ArticleModel(article.get(i).getAuthor(), article.get(i).getTitle(), article.get(i).getDescription(), article.get(i).getUrlToImage(), article.get(i).getPublishedAt(), article.get(i).getContent(), article.get(i).getUrl()));
+                if (response.isSuccessful() && response.body() != null) {
+                    NewsModel newsModel = response.body();
+                    for (ArticleModel articleModel : newsModel.getArticles()) {
+                        if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
+                            articleModelArrayList.add(articleModel);
+                        }
                     }
+                    setUpNews();
+                } else {
+                    Toast.makeText(MainActivity.this, "Failed to load news!", Toast.LENGTH_SHORT).show();
                 }
-                Log.d("data mila1 : ", "" + articleModelArrayList.get(0).getTitle() + articleModelArrayList.get(0).getDescription());
-                Log.d("data mila2 : ", "" + articleModelArrayList.get(1).getTitle() + articleModelArrayList.get(1).getDescription());
-                setUpNews();
-                newsRecyclerViewAdapter.notifyDataSetChanged();
+                binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
+                binding.newsRecyclerView.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -199,6 +215,21 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
     private void showCustomDialog() {
         CustomDialogFragment customDialogFragment = new CustomDialogFragment();
         customDialogFragment.show(getSupportFragmentManager(), "customDialog");
+    }
+
+    //Method for designing the editText inside Textview
+    private void designEditText(EditText editText) {
+        searchEditText.setTextColor(getResources().getColor(R.color.white));
+        searchEditText.setHintTextColor(getResources().getColor(R.color.search_hint_text_color));
+        int editTextPadding = 5;
+        searchEditText.setPadding(dpToPx(editTextPadding), dpToPx(editTextPadding), dpToPx(editTextPadding), dpToPx(editTextPadding));
+        searchEditText.setTextSize(18);
+        searchEditText.setHint("search news");
+    }
+
+    //Method to convert dp to px
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     @Override

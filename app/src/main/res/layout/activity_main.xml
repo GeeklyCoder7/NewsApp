@@ -28,6 +28,13 @@
             android:longClickable="true"
             app:srcCompat="@drawable/saved_articles_icon" />
 
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/newsSearchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:iconifiedByDefault="false" />
+
     </LinearLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

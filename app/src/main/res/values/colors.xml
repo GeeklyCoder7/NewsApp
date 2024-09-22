@@ -8,4 +8,5 @@
     <color name="news_text_color">#333333</color>
     <color name="button_bg_color">#4A90E2</color>
     <color name="already_saved_button_bg_color">#515151</color>
+    <color name="search_hint_text_color">#B4B4B4</color>
 </resources>
