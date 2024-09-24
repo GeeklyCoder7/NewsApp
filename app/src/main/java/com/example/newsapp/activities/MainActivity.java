@@ -30,12 +30,14 @@ import com.example.newsapp.models.ArticleModel;
 import com.example.newsapp.models.CategoryRecyclerViewModel;
 import com.example.newsapp.models.NewsModel;
 import com.example.newsapp.utils.CustomDialogFragment;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -151,18 +153,24 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
 
         //Different API URLs for fetching data in different forms
         String apiUrl = "https://newsapi.org/v2/everything?q=" + q + "&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
-//        String allNewsApiUrl = "https://newsapi.org/v2/everything?q=all&language=en&excludeDomains=stackoverflow.com&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
         String BASE_URL = "https://newsapi.org/";
+
+        OkHttpClient okHttpClient = new OkHttpClient().newBuilder().build();
 
         //Calling the Retrofit api
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
                 .build();
 
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
         Call<NewsModel> call;
-        call = retrofitAPI.getNewsByCategory(apiUrl);
+        call = retrofitAPI.getNewsByCategory(
+                q,
+                "1",
+                "7c62dd4481e04d6e8a9c9b5ecf973603"
+        );
 
         //enqueuing the call method and handling the onResponse and onFailure methods
         call.enqueue(new Callback<NewsModel>() {
@@ -185,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
 
             @Override
             public void onFailure(Call<NewsModel> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Failed to load news!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -51,4 +51,6 @@ dependencies {
     implementation (libs.glide)
     implementation (libs.room.runtime)
     annotationProcessor (libs.room.compiler)
+    implementation(platform(libs.okhttp.bom))
+
 }
