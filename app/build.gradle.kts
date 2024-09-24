@@ -52,5 +52,5 @@ dependencies {
     implementation (libs.room.runtime)
     annotationProcessor (libs.room.compiler)
     implementation(platform(libs.okhttp.bom))
-
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

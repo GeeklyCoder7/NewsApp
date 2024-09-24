@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -145,17 +146,21 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
 
 
     //Method for fetching news
-    private void fetchNews(String q) {
+    private void fetchNews(String query) {
         articleModelArrayList.clear();
         //Setting progress bar to visible while fetching the news
         binding.newsRecyclerView.setVisibility(View.GONE);
         binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
 
-        //Different API URLs for fetching data in different forms
-        String apiUrl = "https://newsapi.org/v2/everything?q=" + q + "&page=1&apikey=7c62dd4481e04d6e8a9c9b5ecf973603";
         String BASE_URL = "https://newsapi.org/";
 
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder().build();
+        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient okHttpClient = new OkHttpClient()
+                .newBuilder()
+                .addInterceptor(httpLoggingInterceptor)
+                .build();
 
         //Calling the Retrofit api
         Retrofit retrofit = new Retrofit.Builder()
@@ -167,15 +172,17 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
         Call<NewsModel> call;
         call = retrofitAPI.getNewsByCategory(
-                q,
+                query,
                 "1",
-                "7c62dd4481e04d6e8a9c9b5ecf973603"
+                "918a046006d744eb9a3780dd93b9ee4d",
+                "10"
         );
 
         //enqueuing the call method and handling the onResponse and onFailure methods
         call.enqueue(new Callback<NewsModel>() {
             @Override
             public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+                Log.d("Afwan : ", new Gson().toJson(response.body()));
                 if (response.isSuccessful() && response.body() != null) {
                     NewsModel newsModel = response.body();
                     for (ArticleModel articleModel : newsModel.getArticles()) {
@@ -185,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                     }
                     setUpNews();
                 } else {
-                    Toast.makeText(MainActivity.this, "Failed to load news!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
                 }
                 binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
                 binding.newsRecyclerView.setVisibility(View.VISIBLE);
@@ -194,6 +201,8 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
             @Override
             public void onFailure(Call<NewsModel> call, Throwable t) {
                 Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
+                Log.d("Afwan : ", "message");
+                t.printStackTrace();
             }
         });
     }

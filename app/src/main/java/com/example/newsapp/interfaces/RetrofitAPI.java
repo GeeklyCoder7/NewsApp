@@ -13,6 +13,7 @@ public interface RetrofitAPI {
     Call<NewsModel> getNewsByCategory(
             @Query("q") String q,
             @Query("page") String page,
-            @Query("apikey") String apikey
+            @Query("apikey") String apikey,
+            @Query("pageSize") String pageSize
     );
 }
