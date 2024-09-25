@@ -1,41 +1,36 @@
 package com.example.newsapp.activities;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.newsapp.R;
 import com.example.newsapp.adapters.CategoryRecyclerViewAdapter;
 import com.example.newsapp.adapters.NewsRecyclerViewAdapter;
 import com.example.newsapp.databinding.ActivityMainBinding;
-import com.example.newsapp.databinding.CloseAppCustomDialogLayoutBinding;
 import com.example.newsapp.interfaces.RetrofitAPI;
 import com.example.newsapp.models.ArticleModel;
 import com.example.newsapp.models.CategoryRecyclerViewModel;
 import com.example.newsapp.models.NewsModel;
 import com.example.newsapp.utils.CustomDialogFragment;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -52,8 +47,13 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
     CategoryRecyclerViewAdapter categoryRecyclerViewAdapter;
     NewsRecyclerViewAdapter newsRecyclerViewAdapter;
     ArrayList<ArticleModel> articleModelArrayList;
-    String pageNo = "1";
     EditText searchEditText;
+    int pageNo = 1;
+    int pageLimit = 5;
+    boolean isLoading = false;
+    String myQuery = "all";
+    static final String API_KEY = "918a046006d744eb9a3780dd93b9ee4d";
+    private static final String pageSize = "15";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         //Calling important methods here
         designEditText(searchEditText);
         fetchCategories();
-        fetchNews("All");
+        fetchNews(myQuery);
         newsRecyclerViewAdapter.notifyDataSetChanged();
 
         //Setting the functionality for refreshing the page
@@ -112,13 +112,26 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         binding.newsSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                fetchNews(query);
+                myQuery = query;
+                searchNews(myQuery);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 return false;
+            }
+        });
+
+        binding.newsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (!recyclerView.canScrollVertically(1) && newState==RecyclerView.SCROLL_STATE_IDLE) {
+                    if (!isLoading && pageNo <= pageLimit) {
+                        loadMore(myQuery);
+                    }
+                }
             }
         });
     }
@@ -146,8 +159,10 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
 
 
     //Method for fetching news
-    private void fetchNews(String query) {
+    private void fetchNews(String fetchQuery) {
         articleModelArrayList.clear();
+        pageNo = 1;
+
         //Setting progress bar to visible while fetching the news
         binding.newsRecyclerView.setVisibility(View.GONE);
         binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
@@ -172,17 +187,17 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
         Call<NewsModel> call;
         call = retrofitAPI.getNewsByCategory(
-                query,
-                "1",
-                "918a046006d744eb9a3780dd93b9ee4d",
-                "10"
+                fetchQuery,
+                "" + pageNo,
+                "" + API_KEY,
+                "" + pageSize
         );
 
         //enqueuing the call method and handling the onResponse and onFailure methods
         call.enqueue(new Callback<NewsModel>() {
             @Override
             public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
-                Log.d("Afwan : ", new Gson().toJson(response.body()));
+//                Log.d("Afwan : ", new Gson().toJson(response.body()));
                 if (response.isSuccessful() && response.body() != null) {
                     NewsModel newsModel = response.body();
                     for (ArticleModel articleModel : newsModel.getArticles()) {
@@ -194,8 +209,6 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                 } else {
                     Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
                 }
-                binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
-                binding.newsRecyclerView.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -249,9 +262,133 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
+    //Method for loading more data for pagination
+    private void loadMore(String fetchQuery) {
+        pageNo++;
+        isLoading = true;
+
+        binding.loadMoreProgressBar.setVisibility(View.VISIBLE);
+
+        String BASE_URL = "https://newsapi.org/";
+
+        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient okHttpClient = new OkHttpClient()
+                .newBuilder()
+                .addInterceptor(httpLoggingInterceptor)
+                .build();
+
+        //Calling the Retrofit api
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+        Call<NewsModel> call;
+        call = retrofitAPI.getNewsByCategory(
+                fetchQuery,
+                "" + pageNo,
+                "" + API_KEY,
+                "" + pageSize
+        );
+
+        //enqueuing the call method and handling the onResponse and onFailure methods
+        call.enqueue(new Callback<NewsModel>() {
+            @Override
+            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+//                Log.d("Afwan : ", new Gson().toJson(response.body()));
+                if (response.isSuccessful() && response.body() != null) {
+                    NewsModel newsModel = response.body();
+                    for (ArticleModel articleModel : newsModel.getArticles()) {
+                        if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
+                            articleModelArrayList.add(articleModel);
+                        }
+                    }
+                    isLoading = false;
+                    setUpNews();
+                    binding.loadMoreProgressBar.setVisibility(View.GONE);
+                } else {
+                    Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NewsModel> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
+//                Log.d("Afwan : ", "message");
+                t.printStackTrace();
+            }
+        });
+    }
+
+    //Method for fetching data through search
+    private void searchNews(String searchQuery) {
+        articleModelArrayList.clear();
+        pageNo = 1;
+
+        //Setting progress bar to visible while fetching the news
+        binding.newsRecyclerView.setVisibility(View.GONE);
+        binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+
+        String BASE_URL = "https://newsapi.org/";
+
+        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient okHttpClient = new OkHttpClient()
+                .newBuilder()
+                .addInterceptor(httpLoggingInterceptor)
+                .build();
+
+        //Calling the Retrofit api
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+        Call<NewsModel> call;
+        call = retrofitAPI.getNewsBySearch(
+                searchQuery,
+                "" + API_KEY,
+                "" + pageSize
+        );
+
+        //enqueuing the call method and handling the onResponse and onFailure methods
+        call.enqueue(new Callback<NewsModel>() {
+            @Override
+            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+//                Log.d("Afwan : ", new Gson().toJson(response.body()));
+                if (response.isSuccessful() && response.body() != null) {
+                    NewsModel newsModel = response.body();
+                    for (ArticleModel articleModel : newsModel.getArticles()) {
+                        if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
+                            articleModelArrayList.add(articleModel);
+                        }
+                    }
+                    setUpNews();
+                } else {
+                    Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NewsModel> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
+//                Log.d("Afwan : ", "message");
+                t.printStackTrace();
+            }
+        });
+    }
+
     @Override
     public void onCategoryClick(int position) {
         String category = categoryRecyclerViewModelArrayList.get(position).getCategoryName();
-        fetchNews(category);
+        myQuery = category;
+        fetchNews(myQuery);
     }
 }

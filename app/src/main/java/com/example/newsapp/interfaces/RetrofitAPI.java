@@ -16,4 +16,11 @@ public interface RetrofitAPI {
             @Query("apikey") String apikey,
             @Query("pageSize") String pageSize
     );
+
+    @GET("/v2/everything")
+    Call<NewsModel> getNewsBySearch(
+            @Query("q") String q,
+            @Query("apikey") String apikey,
+            @Query("pageSize") String pageSize
+    );
 }
