@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -28,6 +29,7 @@ import com.example.newsapp.models.ArticleModel;
 import com.example.newsapp.models.CategoryRecyclerViewModel;
 import com.example.newsapp.models.NewsModel;
 import com.example.newsapp.utils.CustomDialogFragment;
+import com.example.newsapp.utils.UtilityMethods;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
     int pageLimit = 5;
     boolean isLoading = false;
     String myQuery = "all";
-    static final String API_KEY = "918a046006d744eb9a3780dd93b9ee4d";
+    static final String API_KEY = "7c62dd4481e04d6e8a9c9b5ecf973603";
     private static final String pageSize = "15";
 
     @Override
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         designEditText(searchEditText);
         fetchCategories();
         fetchNews(myQuery);
+
         newsRecyclerViewAdapter.notifyDataSetChanged();
 
         //Setting the functionality for refreshing the page
@@ -163,61 +166,71 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         articleModelArrayList.clear();
         pageNo = 1;
 
-        //Setting progress bar to visible while fetching the news
-        binding.newsRecyclerView.setVisibility(View.GONE);
-        binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+        if (UtilityMethods.isConnectedToInternet(MainActivity.this)) {
+            //Setting progress bar to visible while fetching the news
+            binding.errorShowingLinearLayout.setVisibility(View.GONE);
+            binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+            binding.newsRecyclerView.setVisibility(View.GONE);
 
-        String BASE_URL = "https://newsapi.org/";
+            String BASE_URL = "https://newsapi.org/";
 
-        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
-        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+            httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-        OkHttpClient okHttpClient = new OkHttpClient()
-                .newBuilder()
-                .addInterceptor(httpLoggingInterceptor)
-                .build();
+            OkHttpClient okHttpClient = new OkHttpClient()
+                    .newBuilder()
+                    .addInterceptor(httpLoggingInterceptor)
+                    .build();
 
-        //Calling the Retrofit api
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(okHttpClient)
-                .build();
+            //Calling the Retrofit api
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(okHttpClient)
+                    .build();
 
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
-        Call<NewsModel> call;
-        call = retrofitAPI.getNewsByCategory(
-                fetchQuery,
-                "" + pageNo,
-                "" + API_KEY,
-                "" + pageSize
-        );
+            RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+            Call<NewsModel> call;
+            call = retrofitAPI.getNewsByCategory(
+                    fetchQuery,
+                    "" + pageNo,
+                    "" + API_KEY,
+                    "" + pageSize
+            );
 
-        //enqueuing the call method and handling the onResponse and onFailure methods
-        call.enqueue(new Callback<NewsModel>() {
-            @Override
-            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+            //enqueuing the call method and handling the onResponse and onFailure methods
+            call.enqueue(new Callback<NewsModel>() {
+                @Override
+                public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
 //                Log.d("Afwan : ", new Gson().toJson(response.body()));
-                if (response.isSuccessful() && response.body() != null) {
-                    NewsModel newsModel = response.body();
-                    for (ArticleModel articleModel : newsModel.getArticles()) {
-                        if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
-                            articleModelArrayList.add(articleModel);
+                    if (response.isSuccessful() && response.body() != null) {
+                        NewsModel newsModel = response.body();
+                        for (ArticleModel articleModel : newsModel.getArticles()) {
+                            if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
+                                articleModelArrayList.add(articleModel);
+                            }
                         }
+                        setUpNews();
+                    } else {
+                        binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
+                        binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+                        binding.errorShowingTextView.setText("Oops.. Server not responding!");
+                        binding.errorShowingImageView.setImageResource(R.drawable.server_error_image);
                     }
-                    setUpNews();
-                } else {
-                    Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
                 }
-            }
 
-            @Override
-            public void onFailure(Call<NewsModel> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
-                Log.d("Afwan : ", "message");
-                t.printStackTrace();
-            }
-        });
+                @Override
+                public void onFailure(Call<NewsModel> call, Throwable t) {
+                    Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
+                    Log.d("Afwan : ", "message");
+                    t.printStackTrace();
+                }
+            });
+        } else {
+            binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+            binding.errorShowingImageView.setImageResource(R.drawable.no_internet_connection_error_svg_image);
+            binding.errorShowingTextView.setText("No Internet Connection!");
+        }
     }
 
     //Method for setting up the category recycler view
@@ -264,64 +277,72 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
 
     //Method for loading more data for pagination
     private void loadMore(String fetchQuery) {
-        pageNo++;
-        isLoading = true;
+        if (UtilityMethods.isConnectedToInternet(MainActivity.this)) {
+            binding.errorShowingLinearLayout.setVisibility(View.GONE);
+            binding.loadMoreProgressBar.setVisibility(View.VISIBLE);
 
-        binding.loadMoreProgressBar.setVisibility(View.VISIBLE);
+            pageNo++;
+            isLoading = true;
 
-        String BASE_URL = "https://newsapi.org/";
+            String BASE_URL = "https://newsapi.org/";
 
-        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
-        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+            httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-        OkHttpClient okHttpClient = new OkHttpClient()
-                .newBuilder()
-                .addInterceptor(httpLoggingInterceptor)
-                .build();
+            OkHttpClient okHttpClient = new OkHttpClient()
+                    .newBuilder()
+                    .addInterceptor(httpLoggingInterceptor)
+                    .build();
 
-        //Calling the Retrofit api
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(okHttpClient)
-                .build();
+            //Calling the Retrofit api
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(okHttpClient)
+                    .build();
 
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
-        Call<NewsModel> call;
-        call = retrofitAPI.getNewsByCategory(
-                fetchQuery,
-                "" + pageNo,
-                "" + API_KEY,
-                "" + pageSize
-        );
+            RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+            Call<NewsModel> call;
+            call = retrofitAPI.getNewsByCategory(
+                    fetchQuery,
+                    "" + pageNo,
+                    "" + API_KEY,
+                    "" + pageSize
+            );
 
-        //enqueuing the call method and handling the onResponse and onFailure methods
-        call.enqueue(new Callback<NewsModel>() {
-            @Override
-            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+            //enqueuing the call method and handling the onResponse and onFailure methods
+            call.enqueue(new Callback<NewsModel>() {
+                @Override
+                public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
 //                Log.d("Afwan : ", new Gson().toJson(response.body()));
-                if (response.isSuccessful() && response.body() != null) {
-                    NewsModel newsModel = response.body();
-                    for (ArticleModel articleModel : newsModel.getArticles()) {
-                        if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
-                            articleModelArrayList.add(articleModel);
+                    if (response.isSuccessful() && response.body() != null) {
+                        NewsModel newsModel = response.body();
+                        for (ArticleModel articleModel : newsModel.getArticles()) {
+                            if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
+                                articleModelArrayList.add(articleModel);
+                            }
                         }
+                        binding.loadMoreProgressBar.setVisibility(View.GONE);
+                        isLoading = false;
+                        setUpNews();
+                    } else {
+                        binding.loadMoreProgressBar.setVisibility(View.GONE);
+                        Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
                     }
-                    isLoading = false;
-                    setUpNews();
-                    binding.loadMoreProgressBar.setVisibility(View.GONE);
-                } else {
-                    Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
                 }
-            }
 
-            @Override
-            public void onFailure(Call<NewsModel> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
+                @Override
+                public void onFailure(Call<NewsModel> call, Throwable t) {
+                    Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
 //                Log.d("Afwan : ", "message");
-                t.printStackTrace();
-            }
-        });
+                    t.printStackTrace();
+                }
+            });
+        } else {
+            binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+            binding.errorShowingImageView.setImageResource(R.drawable.no_internet_connection_error_svg_image);
+            binding.errorShowingTextView.setText("No Internet Connection!");
+        }
     }
 
     //Method for fetching data through search
@@ -329,60 +350,70 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         articleModelArrayList.clear();
         pageNo = 1;
 
-        //Setting progress bar to visible while fetching the news
-        binding.newsRecyclerView.setVisibility(View.GONE);
-        binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+        if (UtilityMethods.isConnectedToInternet(MainActivity.this)) {
+            //Setting progress bar to visible while fetching the news
+            binding.errorShowingLinearLayout.setVisibility(View.GONE);
+            binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+            binding.newsRecyclerView.setVisibility(View.GONE);
 
-        String BASE_URL = "https://newsapi.org/";
+            String BASE_URL = "https://newsapi.org/";
 
-        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
-        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+            httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-        OkHttpClient okHttpClient = new OkHttpClient()
-                .newBuilder()
-                .addInterceptor(httpLoggingInterceptor)
-                .build();
+            OkHttpClient okHttpClient = new OkHttpClient()
+                    .newBuilder()
+                    .addInterceptor(httpLoggingInterceptor)
+                    .build();
 
-        //Calling the Retrofit api
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(okHttpClient)
-                .build();
+            //Calling the Retrofit api
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(okHttpClient)
+                    .build();
 
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
-        Call<NewsModel> call;
-        call = retrofitAPI.getNewsBySearch(
-                searchQuery,
-                "" + API_KEY,
-                "" + pageSize
-        );
+            RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+            Call<NewsModel> call;
+            call = retrofitAPI.getNewsBySearch(
+                    searchQuery,
+                    "" + API_KEY,
+                    "" + pageSize
+            );
 
-        //enqueuing the call method and handling the onResponse and onFailure methods
-        call.enqueue(new Callback<NewsModel>() {
-            @Override
-            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+            //enqueuing the call method and handling the onResponse and onFailure methods
+            call.enqueue(new Callback<NewsModel>() {
+                @Override
+                public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
 //                Log.d("Afwan : ", new Gson().toJson(response.body()));
-                if (response.isSuccessful() && response.body() != null) {
-                    NewsModel newsModel = response.body();
-                    for (ArticleModel articleModel : newsModel.getArticles()) {
-                        if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
-                            articleModelArrayList.add(articleModel);
+                    if (response.isSuccessful() && response.body() != null) {
+                        NewsModel newsModel = response.body();
+                        for (ArticleModel articleModel : newsModel.getArticles()) {
+                            if (articleModel != null && articleModel.getTitle() != null && articleModel.getDescription() != null && articleModel.getTitle().length() > 15 && articleModel.getDescription().length() > 15) {
+                                articleModelArrayList.add(articleModel);
+                            }
                         }
+                        setUpNews();
+                    } else {
+                        binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
+                        binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+                        binding.errorShowingTextView.setText("Oops.. Server not responding!");
+                        binding.errorShowingImageView.setImageResource(R.drawable.server_error_image);
                     }
-                    setUpNews();
-                } else {
-                    Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
                 }
-            }
 
-            @Override
-            public void onFailure(Call<NewsModel> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
-//                Log.d("Afwan : ", "message");
-                t.printStackTrace();
-            }
-        });
+                @Override
+                public void onFailure(Call<NewsModel> call, Throwable t) {
+                    Toast.makeText(MainActivity.this, "Some error occured", Toast.LENGTH_SHORT).show();
+                    Log.d("Afwan : ", "message");
+                    t.printStackTrace();
+                }
+            });
+        } else {
+            binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+            binding.errorShowingImageView.setImageResource(R.drawable.no_internet_connection_error_svg_image);
+            binding.errorShowingTextView.setText("No Internet Connection!");
+        }
     }
 
     @Override

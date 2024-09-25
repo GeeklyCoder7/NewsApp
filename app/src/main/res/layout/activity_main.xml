@@ -6,34 +6,87 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
+    android:clipChildren="false"
     tools:context=".activities.MainActivity">
 
     <!-- Add SwipeRefreshLayout here -->
-    <LinearLayout
-        android:id="@+id/appBarHorizontalLayout"
+    <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@color/primary_color"
-        android:orientation="horizontal"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/savedArticlesScreenIconImageView"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="5dp"
-            android:clickable="true"
-            android:longClickable="true"
-            app:srcCompat="@drawable/saved_articles_icon" />
+        <LinearLayout
+            android:id="@+id/appBarHorizontalLayout"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/app_bar_background_drawable"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/newsSearchView"
+            <ImageView
+                android:id="@+id/savedArticlesScreenIconImageView"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="5dp"
+                android:clickable="true"
+                android:longClickable="true"
+                app:srcCompat="@drawable/saved_articles_icon" />
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/newsSearchView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:iconifiedByDefault="false" />
+
+        </LinearLayout>
+    </FrameLayout>
+
+
+    <!-- Lottie Animation Progress Bar for loading -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/categoryRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/frameLayout">
+
+    </androidx.recyclerview.widget.RecyclerView>
+
+    <LinearLayout
+        android:id="@+id/errorShowingLinearLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center_horizontal|center_vertical"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/categoryRecyclerView">
+
+        <ImageView
+            android:id="@+id/errorShowingImageView"
+            android:layout_width="120dp"
+            android:layout_height="120dp" />
+
+        <TextView
+            android:id="@+id/errorShowingTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:iconifiedByDefault="false" />
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/baloo_bhai"
+            android:textAlignment="center"
+            android:textColor="@color/primary_color"
+            android:textSize="25sp" />
 
     </LinearLayout>
 
@@ -44,7 +97,7 @@
         app:layout_constraintBottom_toTopOf="@+id/loadMoreProgressBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appBarHorizontalLayout">
+        app:layout_constraintTop_toBottomOf="@+id/categoryRecyclerView">
 
         <!-- NestedScrollView stays the same -->
 
@@ -61,18 +114,10 @@
                 android:orientation="vertical">
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/categoryRecyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                </androidx.recyclerview.widget.RecyclerView>
-
-                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/newsRecyclerView"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="match_parent"
+                    tools:listitem="@layout/news_sample_card">
 
                 </androidx.recyclerview.widget.RecyclerView>
 
@@ -80,21 +125,23 @@
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- Lottie Animation Progress Bar for loading -->
-    <ProgressBar
+    <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/loadMoreProgressBar"
-        style="?android:attr/progressBarStyle"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="80dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/loading_next_page_animation" />
 
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/fetchingNewsProgressBarAnimation"
         android:layout_width="150dp"
         android:layout_height="150dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
