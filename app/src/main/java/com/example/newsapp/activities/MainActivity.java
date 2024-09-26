@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
     int pageLimit = 5;
     boolean isLoading = false;
     String myQuery = "all";
-    static final String API_KEY = "7c62dd4481e04d6e8a9c9b5ecf973603";
+    static final String API_KEY = "354ea7d4e57e4e3185132c7ba9314dd6";
     private static final String pageSize = "20";
 
     @Override
