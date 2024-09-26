@@ -48,7 +48,7 @@ public class SavedArticlesRecyclerViewAdapter extends RecyclerView.Adapter<Saved
     public void onBindViewHolder(@NonNull SavedArticlesRecyclerViewAdapterViewHolder holder, @SuppressLint("RecyclerView") int position) {
         ArticleEntity articleEntity = articleEntityArrayList.get(position);
         holder.binding.newsHeadlineTextView.setText(articleEntity.getTitle());
-        if (articleEntity.getUrlToImage() == null) {
+        if (articleEntity.getUrlToImage() == null || articleEntity.getUrlToImage().isEmpty()) {
             Glide.with(context).load(R.drawable.placeholder).into(holder.binding.newsImageView);
         } else {
             Glide.with(context).load(articleEntity.getUrlToImage()).into(holder.binding.newsImageView);

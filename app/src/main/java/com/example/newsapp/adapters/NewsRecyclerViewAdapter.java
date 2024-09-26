@@ -57,7 +57,7 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
         }
 
         holder.binding.newsHeadlineTextView.setText(articleModel.getTitle());
-        if (articleModel.getUrlToImage() == null) {
+        if (articleModel.getUrlToImage() == null || articleModel.getUrlToImage().isEmpty()) {
             holder.binding.newsImageView.setImageResource(R.drawable.news_image_not_available_png);
         } else {
             Glide.with(context).load(articleModel.getUrlToImage()).into(holder.binding.newsImageView);

@@ -16,6 +16,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
     boolean isLoading = false;
     String myQuery = "all";
     static final String API_KEY = "7c62dd4481e04d6e8a9c9b5ecf973603";
-    private static final String pageSize = "15";
+    private static final String pageSize = "20";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,14 +127,15 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
             }
         });
 
-        binding.newsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (!recyclerView.canScrollVertically(1) && newState==RecyclerView.SCROLL_STATE_IDLE) {
-                    if (!isLoading && pageNo <= pageLimit) {
-                        loadMore(myQuery);
-                    }
+            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                // Get the total scrollable height of the NestedScrollView
+                int totalScrollRange = v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight();
+
+                // Check if we have scrolled to the bottom
+                if (scrollY == totalScrollRange && !isLoading && pageNo <= pageLimit) {
+                    loadMore(myQuery);
                 }
             }
         });
@@ -152,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.tech_category_name), "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"));
         categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.science_category_name), "https://plus.unsplash.com/premium_photo-1676325101955-1089267548d4?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"));
         categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.sports_category_name), "https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=783&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"));
-        categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.general_category_name), ""));
         categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.business_category_name), "https://plus.unsplash.com/premium_photo-1682309547509-dba279a54939?q=80&w=912&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"));
         categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.entertainment_category_name), "https://images.unsplash.com/photo-1496337589254-7e19d01cec44?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"));
         categoryRecyclerViewModelArrayList.add(new CategoryRecyclerViewModel(getString(R.string.health_category_name), "https://plus.unsplash.com/premium_photo-1673953509975-576678fa6710?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"));
@@ -166,11 +167,12 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         articleModelArrayList.clear();
         pageNo = 1;
 
+        //Setting progress bar to visible while fetching the news
+        binding.errorShowingLinearLayout.setVisibility(View.GONE);
+        binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+        binding.newsRecyclerView.setVisibility(View.GONE);
+
         if (UtilityMethods.isConnectedToInternet(MainActivity.this)) {
-            //Setting progress bar to visible while fetching the news
-            binding.errorShowingLinearLayout.setVisibility(View.GONE);
-            binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
-            binding.newsRecyclerView.setVisibility(View.GONE);
 
             String BASE_URL = "https://newsapi.org/";
 
@@ -214,6 +216,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                     } else {
                         binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
                         binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+                        binding.loadMoreProgressBar.setVisibility(View.GONE);
                         binding.errorShowingTextView.setText("Oops.. Server not responding!");
                         binding.errorShowingImageView.setImageResource(R.drawable.server_error_image);
                     }
@@ -227,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                 }
             });
         } else {
+            binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
             binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
             binding.errorShowingImageView.setImageResource(R.drawable.no_internet_connection_error_svg_image);
             binding.errorShowingTextView.setText("No Internet Connection!");
@@ -326,8 +330,11 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                         isLoading = false;
                         setUpNews();
                     } else {
+                        binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
+                        binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
                         binding.loadMoreProgressBar.setVisibility(View.GONE);
-                        Toast.makeText(MainActivity.this, "Server not responding", Toast.LENGTH_SHORT).show();
+                        binding.errorShowingTextView.setText("Oops.. Server not responding!");
+                        binding.errorShowingImageView.setImageResource(R.drawable.server_error_image);
                     }
                 }
 
@@ -350,12 +357,12 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
         articleModelArrayList.clear();
         pageNo = 1;
 
-        if (UtilityMethods.isConnectedToInternet(MainActivity.this)) {
-            //Setting progress bar to visible while fetching the news
-            binding.errorShowingLinearLayout.setVisibility(View.GONE);
-            binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
-            binding.newsRecyclerView.setVisibility(View.GONE);
+        //Setting progress bar to visible while fetching the news
+        binding.errorShowingLinearLayout.setVisibility(View.GONE);
+        binding.fetchingNewsProgressBarAnimation.setVisibility(View.VISIBLE);
+        binding.newsRecyclerView.setVisibility(View.GONE);
 
+        if (UtilityMethods.isConnectedToInternet(MainActivity.this)) {
             String BASE_URL = "https://newsapi.org/";
 
             HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
@@ -397,6 +404,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                     } else {
                         binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
                         binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
+                        binding.loadMoreProgressBar.setVisibility(View.GONE);
                         binding.errorShowingTextView.setText("Oops.. Server not responding!");
                         binding.errorShowingImageView.setImageResource(R.drawable.server_error_image);
                     }
@@ -410,6 +418,7 @@ public class MainActivity extends AppCompatActivity implements CategoryRecyclerV
                 }
             });
         } else {
+            binding.fetchingNewsProgressBarAnimation.setVisibility(View.GONE);
             binding.errorShowingLinearLayout.setVisibility(View.VISIBLE);
             binding.errorShowingImageView.setImageResource(R.drawable.no_internet_connection_error_svg_image);
             binding.errorShowingTextView.setText("No Internet Connection!");
